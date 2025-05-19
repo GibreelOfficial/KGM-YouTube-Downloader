@@ -1,7 +1,7 @@
 # KGM-YouTube-Downloader
 # KGM-YouTube-Downloader
 <p align="center">
-  <img src="KGM_yt_logo" alt="KGM YouTube Downloader Logo" width="120" />
+  <img src="KGM_yt_logo.png" alt="KGM YouTube Downloader Logo" width="120" />
 </p>
 
 <h1 align="center">🎬✨ KGM YouTube Downloader 🎧⬇️</h1>
