@@ -1,9 +1,9 @@
-('/Users/gibreel/Documents/KGM-YouTube Downloader/build/KGM YouTube '
+('/Users/gibreel/Documents/KGM-YouTube-Downloader/build/KGM YouTube '
  'Downloader/KGM YouTube Downloader',
  False,
  False,
  True,
- ['/Users/gibreel/Documents/KGM-YouTube Downloader/icon.icns'],
+ ['/Users/gibreel/Documents/KGM-YouTube-Downloader/icon.icns'],
  None,
  False,
  False,
@@ -13,12 +13,12 @@
  'x86_64',
  None,
  None,
- '/Users/gibreel/Documents/KGM-YouTube Downloader/build/KGM YouTube '
+ '/Users/gibreel/Documents/KGM-YouTube-Downloader/build/KGM YouTube '
  'Downloader/KGM YouTube Downloader.pkg',
  [('pyi-macos-argv-emulation', '', 'OPTION'),
   ('pyi-contents-directory _internal', '', 'OPTION'),
   ('PYZ-00.pyz',
-   '/Users/gibreel/Documents/KGM-YouTube Downloader/build/KGM YouTube '
+   '/Users/gibreel/Documents/KGM-YouTube-Downloader/build/KGM YouTube '
    'Downloader/PYZ-00.pyz',
    'PYZ'),
   ('lib-dynload/_struct.cpython-312-darwin.so',
@@ -28,19 +28,19 @@
    '/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/lib-dynload/zlib.cpython-312-darwin.so',
    'EXTENSION'),
   ('struct',
-   '/Users/gibreel/Documents/KGM-YouTube Downloader/build/KGM YouTube '
+   '/Users/gibreel/Documents/KGM-YouTube-Downloader/build/KGM YouTube '
    'Downloader/localpycs/struct.pyc',
    'PYMODULE'),
   ('pyimod01_archive',
-   '/Users/gibreel/Documents/KGM-YouTube Downloader/build/KGM YouTube '
+   '/Users/gibreel/Documents/KGM-YouTube-Downloader/build/KGM YouTube '
    'Downloader/localpycs/pyimod01_archive.pyc',
    'PYMODULE'),
   ('pyimod02_importers',
-   '/Users/gibreel/Documents/KGM-YouTube Downloader/build/KGM YouTube '
+   '/Users/gibreel/Documents/KGM-YouTube-Downloader/build/KGM YouTube '
    'Downloader/localpycs/pyimod02_importers.pyc',
    'PYMODULE'),
   ('pyimod03_ctypes',
-   '/Users/gibreel/Documents/KGM-YouTube Downloader/build/KGM YouTube '
+   '/Users/gibreel/Documents/KGM-YouTube-Downloader/build/KGM YouTube '
    'Downloader/localpycs/pyimod03_ctypes.pyc',
    'PYMODULE'),
   ('pyiboot01_bootstrap',
@@ -65,12 +65,12 @@
    '/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/PyInstaller/hooks/rthooks/pyi_rth__tkinter.py',
    'PYSOURCE'),
   ('main',
-   '/Users/gibreel/Documents/KGM-YouTube Downloader/main.py',
+   '/Users/gibreel/Documents/KGM-YouTube-Downloader/main.py',
    'PYSOURCE')],
  [],
  False,
  False,
- 1747642769,
+ 1747649314,
  [('runw',
    '/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/PyInstaller/bootloader/Darwin-64bit/runw',
    'EXECUTABLE')],

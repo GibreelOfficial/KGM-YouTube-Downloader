@@ -1250,7 +1250,7 @@
 		</data>
 		<key>Resources/base_library.zip</key>
 		<data>
-		LM/RRO/8IpHor3JWk/dT5VH9a6Y=
+		FbkrSivxYxwJDZigmJm1HfJNeRc=
 		</data>
 		<key>Resources/graphiti.png</key>
 		<data>
@@ -1343,6 +1343,10 @@
 		<key>Resources/tcl8/8.6/tdbc/sqlite3-1.1.5.tm</key>
 		<data>
 		3u3rzq4MdpDKnzABvT6LF6CnnUM=
+		</data>
+		<key>Resources/yt-dlp</key>
+		<data>
+		KMpC62o4QFpDNhwndQrGCknPCsc=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -2247,6 +2251,11 @@
 		<dict>
 			<key>symlink</key>
 			<string>../Resources/tcl8</string>
+		</dict>
+		<key>Frameworks/yt-dlp</key>
+		<dict>
+			<key>symlink</key>
+			<string>../Resources/yt-dlp</string>
 		</dict>
 		<key>Resources/PIL</key>
 		<dict>
@@ -4444,7 +4453,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			HuigLEg2KNjH8c1TY69QViCiSn8FTfYISD1Km5TBLEI=
+			OAM/o6Iyrl8hNnSK4kcI29MXBv1qlBdbxPsoW8kE9ow=
 			</data>
 		</dict>
 		<key>Resources/charset_normalizer</key>
@@ -4701,6 +4710,13 @@
 			<key>hash2</key>
 			<data>
 			9ReD0neL9kkQ0sf1NbIrcwTthXvS97eFqIANP65bkq8=
+			</data>
+		</dict>
+		<key>Resources/yt-dlp</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			0rqv2GA+lJjXMhtBYBtxX4wrh9d4vYSeu34pJnk7Bks=
 			</data>
 		</dict>
 	</dict>

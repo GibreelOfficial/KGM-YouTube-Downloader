@@ -3,11 +3,13 @@ import os
 
 block_cipher = None
 
+yt_dlp_path = os.path.join('bin', 'yt-dlp')  # Adjust if your binary path differs
+
 a = Analysis(
     ['main.py'],
     pathex=[os.getcwd()],
-    binaries=[],
-    datas=[('graphiti.png', '.')],
+    binaries=[(yt_dlp_path, '.')],  # Include yt-dlp in the root of the app bundle
+    datas=[('graphiti.png', '.')],  # Include your background image
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -32,7 +34,7 @@ exe = EXE(
     upx=True,
     console=False,
     disable_windowed_traceback=False,
-    argv_emulation=True,  # Needed for macOS .app
+    argv_emulation=True,  # macOS .app support
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
@@ -53,5 +55,6 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='KGM YouTube Downloader.app',
-    icon='icon.icns'
+    icon='icon.icns',
+    info_plist='Info.plist'
 )

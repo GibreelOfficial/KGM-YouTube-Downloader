@@ -60,29 +60,28 @@ class YouTubeDownloaderApp:
 
         self.video_listbox.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
-    
-    
+
+        # Store yt-dlp path
+        self.ytdlp_path = resource_path("yt-dlp")  # Bundled binary
+
     def fetch_video_list(self, url):
         try:
-            result = subprocess.run(['yt-dlp', '--flat-playlist', '-J', url],
+            result = subprocess.run([self.ytdlp_path, '--flat-playlist', '-J', url],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             data = json.loads(result.stdout)
 
             if 'entries' in data:
-                # Playlist
                 entries = data['entries']
                 video_ids = [entry['id'] for entry in entries]
                 urls = [f"https://www.youtube.com/watch?v={vid}" for vid in video_ids]
 
-                # Get titles individually (faster than full metadata for all at once)
                 titles = []
                 for u in urls:
-                    info = subprocess.run(['yt-dlp', '-J', u], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    info = subprocess.run([self.ytdlp_path, '-J', u], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                     meta = json.loads(info.stdout)
                     titles.append(meta.get("title", u))
                 return list(zip(titles, urls))
             else:
-                # Single video
                 meta = json.loads(result.stdout)
                 return [(meta.get("title", url), url)]
 
@@ -108,7 +107,6 @@ class YouTubeDownloaderApp:
                 self.video_listbox.insert(tk.END, f"⏳ {title}")
 
             for idx, (title, video_url) in enumerate(self.video_entries):
-                # Mark as downloading
                 self.video_listbox.delete(idx)
                 self.video_listbox.insert(idx, f"⬇ {title}")
                 self.video_listbox.select_clear(0, tk.END)
@@ -118,7 +116,7 @@ class YouTubeDownloaderApp:
                 self.status_label.config(text=f"Downloading: {title}")
 
                 cmd = [
-                    'yt-dlp',
+                    self.ytdlp_path,
                     '-f', 'bestvideo[height<=720]+bestaudio/best[height<=720]',
                     '-o', os.path.join(folder, '%(title)s.%(ext)s'),
                     video_url
