@@ -1,5 +1,4 @@
 # KGM-YouTube-Downloader
-# KGM-YouTube-Downloader
 <p align="center">
   <img src="KGM_yt_logo.png" alt="KGM YouTube Downloader Logo" width="120" />
 </p>
