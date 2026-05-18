@@ -1,0 +1,138 @@
+#windowContainer {
+    background-color: {{primary_bg}};
+    border: 2px solid {{border_color}};
+    border-radius: 10px;
+}
+
+#minBtn, #maxBtn, #closeBtn {
+    background: transparent;
+    color: {{text_main}};
+    border: none;
+    font-size: 16px;
+    /* Uniform dimensions */
+    min-width: 18px;
+    max-width: 18px;
+    min-height: 18px;
+    max-height: 18px;
+    /* Rounded corners */
+    border-radius: 6px; 
+}
+
+#CustomTitleBar {
+    border-bottom: 2px solid {{border_color}};
+}
+
+#closeBtn:hover {
+    background-color: {{danger}};
+}
+#minBtn:hover {
+    background-color: {{ready}};
+}
+#maxBtn:hover {
+    background-color: {{gogo}};
+}
+
+#sidebar {
+    background-color: {{secondary_bg}};
+    border-right: 2px solid {{border_color}};
+}
+
+/* Custom progress bar using the accent color */
+/* Custom Table Progress Bars (Applied programmatically) */
+QProgressBar {
+    border: 1px solid #444;
+    border-radius: 5px;
+    background: #222;
+    text-align: right;
+    margin-right: 40px;
+}
+
+QProgressBar::chunk {
+    border-radius: 4px;
+}
+
+/* You would set these classes based on download status */
+.progress-complete::chunk { background-color: #8bc34a; }
+.progress-paused::chunk   { background-color: #ff9800; }
+.progress-failed::chunk   { background-color: #f44336; }
+.progress-queued::chunk   { background-color: #03a9f4; }
+
+/* Dashed Drop Zone */
+#addUrlBtn {
+    background-color: transparent;
+    border: 2px dashed #444444;
+    border-radius: 15px;
+    color: {{text_main}};
+    font-size: 20px;
+}
+
+#addUrlBtn:hover {
+    border-color: #00ffcc;
+    background-color: rgba(0, 255, 204, 0.05);
+}
+
+/* Info Panel at the bottom */
+#infoPanel {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-top: 2px solid #333333;
+    border-radius: 12px;
+}
+
+#statusBar {
+    border-top: 2px solid {{border_color}};
+    color: {{text_main}};
+}
+
+#statusBar QLabel {
+    color: {{text_main}};
+    font-size: 12px;
+}
+
+/* The Table Container */
+#customTable {
+    background-color: {{primary_bg}};
+    alternate-background-color: {{primary_bg}};
+    selection-background-color: {{secondary_bg}};
+    selection-color: {{text_main}};
+    outline: none;
+    border: none;
+    color: {{text_main}};
+}
+
+/* Row Styling */
+#customTable::item {
+    padding: 3px;
+}
+
+#customTable::item:selected {
+    background-color: {{secondary_bg}};
+    border: 2px solid {{ready}};
+}
+
+/* Header Styling - CamelCase & Tight Height */
+QHeaderView::section {
+    background-color: {{primary_bg}};
+    color: {{text_main}};
+    padding-left: 15px;
+    border: none;
+    color: {{text_main}};
+
+    border: 1px solid {{border_color}}; /* Thinner line for a cleaner look */
+    font-weight: 300;
+    font-size: 12px;
+    /* Removed text-transform: uppercase to allow CamelCase */
+}
+
+/* Scrollbar remains minimalist */
+QScrollBar:vertical {
+    border: none;
+    background: transparent;
+    width: 6px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: {{border_color}};
+    min-height: 20px;
+    border-radius: 3px;
+}

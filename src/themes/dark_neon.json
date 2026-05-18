@@ -1,0 +1,10 @@
+{
+    "primary_bg": "#000000",
+    "secondary_bg": "#0b0b0b",
+    "accent_color": "#a8ff00",
+    "text_main": "#ffffff",
+    "border_color": "#ffffff",
+    "danger": "#ff4b4b",
+    "ready": "#f0c917",
+    "gogo": "#58b947"
+}
