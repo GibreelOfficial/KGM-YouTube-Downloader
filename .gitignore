@@ -1,0 +1,30 @@
+# Python Environment & Virtual Environments
+.venv/
+venv/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# py2app & Distribution Build Outputs
+build/
+dist/
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Local Application Data / Download History Database
+downloads_history.json
+
+# IDE / Editor Configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

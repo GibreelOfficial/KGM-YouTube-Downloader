@@ -1,16 +1,18 @@
 import sys
 import os
-import re
 import json
-import subprocess
-from PySide6.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout
-from PySide6.QtCore import Qt, QThread, Signal, Slot
-
+from PySide6.QtWidgets import (QApplication, QHBoxLayout, QFileDialog, QMessageBox, 
+                             QVBoxLayout, QLabel, QProgressBar, QWidget)
+from PySide6.QtCore import Qt, Slot, QThread, QProcess, QSize
+from PySide6.QtGui import QMovie
+from utils.paths import ASSETS_DIR
 from components.framelessWindow import FramelessWindow
 from components.main_view import MainContentView
-from components.sidebar import Sidebar
 from components.statusBar import StatusBar
+from components.dialogues import QueueWindow
 from utils.theme_loader import load_stylesheet
+from utils.download_worker import DownloadWorker
+from utils.updater import YTBDLPUpdater, YTDLPUpdaterWorker
 
 def resource_path(relative_path):
     try:
@@ -19,115 +21,83 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-class DownloadWorker(QThread):
-    progress_updated = Signal(float, str)
-    video_discovered = Signal(list)
-    status_updated = Signal(str)
-    video_status_changed = Signal(int, str)
-    finished_all = Signal()
-
-    def __init__(self, url, folder, ytdlp_path):
+class UpdateProgressPopup(FramelessWindow):
+    def __init__(self, parent=None):
         super().__init__()
-        self.url = url
-        self.folder = folder
-        self.ytdlp_path = ytdlp_path
-
-    def fetch_video_list(self):
-        try:
-            result = subprocess.run(
-                [self.ytdlp_path, '--flat-playlist', '-J', self.url],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
-            )
-            data = json.loads(result.stdout)
-
-            if 'entries' in data:
-                entries = data['entries']
-                urls = [f"https://www.youtube.com/watch?v={e['id']}" for e in entries if 'id' in e]
-                
-                titles = []
-                for u in urls:
-                    info = subprocess.run(
-                        [self.ytdlp_path, '-J', u], 
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-                    )
-                    if info.returncode == 0:
-                        meta = json.loads(info.stdout)
-                        titles.append(meta.get("title", u))
-                    else:
-                        titles.append(u)
-                return list(zip(titles, urls))
-            else:
-                return [(data.get("title", self.url), self.url)]
-        except Exception:
-            return []
-
-    def run(self):
-        self.status_updated.emit("Fetching stream data...")
-        video_entries = self.fetch_video_list()
+        self.setWindowModality(Qt.ApplicationModal)
+        self.setWindowTitle("Updating Engine")
+        self.resize(400, 260)
         
-        if not video_entries:
-            self.status_updated.emit("Error: Could not retrieve video data.")
-            self.finished_all.emit()
-            return
-
-        self.video_discovered.emit([title for title, _ in video_entries])
-
-        progress_pattern = re.compile(r'\[download\]\s+(\d+\.\d+)%')
-
-        for idx, (title, video_url) in enumerate(video_entries):
-            self.video_status_changed.emit(idx, "downloading")
-            self.status_updated.emit(f"Downloading: {title}")
-
-            cmd = [
-                self.ytdlp_path,
-                '-f', 'bestvideo[height<=720]+bestaudio/best[height<=720]',
-                '-o', os.path.join(self.folder, '%(title)s.%(ext)s'),
-                video_url
-            ]
-
-            process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
-            )
-
-            while True:
-                line = process.stdout.readline()
-                if not line:
-                    break
-                match = progress_pattern.search(line)
-                if match:
-                    percent = float(match.group(1))
-                    self.progress_updated.emit(percent, f"Downloading: {title} - {percent:.1f}%")
-
-            process.wait()
-
-            if process.returncode == 0:
-                self.video_status_changed.emit(idx, "success")
-            else:
-                self.video_status_changed.emit(idx, "failed")
-                
-            self.progress_updated.emit(0.0, "")
-
-        self.status_updated.emit("All tasks completed successfully.")
-        self.finished_all.emit()
+        self.title_bar.theme_toggle.setVisible(False)
+        self.title_bar.btn_min.setVisible(False)
+        self.title_bar.btn_max.setVisible(False)
+        self.title_bar.btn_close.setVisible(False)
+        
+        body_layout = QVBoxLayout(self.content_area)
+        body_layout.setContentsMargins(25, 20, 25, 20)
+        body_layout.setSpacing(15)
+        
+        self.gif_label = QLabel()
+        self.gif_label.setAlignment(Qt.AlignCenter)
+        
+        gif_path = os.path.join(ASSETS_DIR, "dancing.gif")
+        self.movie = QMovie(gif_path)
+        self.movie.setScaledSize(QSize(120, 120))
+        self.gif_label.setFixedSize(120, 120)
+        self.gif_label.setMovie(self.movie)
+        self.movie.start()
+        
+        self.info_label = QLabel("Initializing update...")
+        self.info_label.setObjectName("detailName")
+        self.info_label.setWordWrap(True)
+        
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 0)
+        self.progress_bar.setFixedHeight(12)
+        self.progress_bar.setTextVisible(False)
+        
+        body_layout.addWidget(self.gif_label, 0, Qt.AlignCenter)
+        body_layout.addWidget(self.info_label)
+        body_layout.addWidget(self.progress_bar)
 
 class KGMDownloaderApp(FramelessWindow):
-    def __init__(self):
+    def __init__(self, initial_theme="dark_neon"):
         super().__init__()
         self.setWindowTitle("KGM YouTube Downloader")
-        self.resize(1100, 700)
-        self.ytdlp_path = resource_path("yt-dlp")
+        self.resize(1050, 680)
+        
+        self.bin_dir = resource_path("bin")
+        
+        if sys.platform == "win32":
+            platform_folder = "win32"
+            ytdlp_filename = "yt-dlp.exe"
+        elif sys.platform == "darwin":
+            platform_folder = "darwin"
+            ytdlp_filename = "yt-dlp_macos"
+        else:
+            platform_folder = "linux"
+            ytdlp_filename = "yt-dlp"
+            
+        self.platform_bin_dir = os.path.join(self.bin_dir, platform_folder)
+        self.ytdlp_path = os.path.join(self.platform_bin_dir, ytdlp_filename)
+            
         self.worker = None
+        self.current_theme = initial_theme
+        self.queue_dialog = None
+        
+        self.updater_thread = None
+        self.updater_worker = None
+        self.popup_dialog = None
+        
         self.setup_body()
+        self.run_background_updater()
 
     def setup_body(self):
         central_layout = QHBoxLayout(self.content_area)
         central_layout.setContentsMargins(0, 0, 0, 0)
         central_layout.setSpacing(0)
 
-        self.sidebar = Sidebar(self)
         self.main_content = MainContentView(self)
-        
-        central_layout.addWidget(self.sidebar)
         central_layout.addWidget(self.main_content, 1)
 
         self.status_bar = StatusBar(self)
@@ -136,65 +106,167 @@ class KGMDownloaderApp(FramelessWindow):
         self.connect_ui_events()
 
     def connect_ui_events(self):
-        pass
+        self.main_content.add_url_btn.clicked.connect(self.handle_fetch_trigger)
+        self.main_content.browse_btn.clicked.connect(self.handle_browse_trigger)
+        self.main_content.queue_window_btn.clicked.connect(self.toggle_queue_window)
+        self.status_bar.update_btn.clicked.connect(self.trigger_manual_update)
+
+    def run_background_updater(self):
+        self.background_updater = YTBDLPUpdater(self.bin_dir)
+        self.background_updater.status_updated.connect(self.update_status_message)
+        self.background_updater.update_finished.connect(self.handle_updater_complete)
+        self.background_updater.start()
+
+    @Slot(bool, str)
+    def handle_updater_complete(self, success, result_path):
+        if success:
+            self.ytdlp_path = result_path
+            self.update_status_message("Engine verified and updated to local architecture.")
+        else:
+            self.update_status_message(f"Engine status verified.")
+
+    @Slot()
+    def trigger_manual_update(self):
+        self.status_bar.update_btn.setEnabled(False)
+        
+        self.popup_dialog = UpdateProgressPopup(self)
+        self.popup_dialog.show()
+        
+        self.updater_thread = QThread()
+        self.updater_worker = YTDLPUpdaterWorker(self.ytdlp_path)
+        self.updater_worker.moveToThread(self.updater_thread)
+        
+        self.updater_thread.started.connect(self.updater_worker.run)
+        self.updater_worker.progress.connect(self.handle_manual_update_progress)
+        self.updater_worker.finished.connect(self.handle_manual_update_finished)
+        
+        self.updater_worker.finished.connect(self.updater_thread.quit)
+        self.updater_worker.finished.connect(self.updater_worker.deleteLater)
+        self.updater_thread.finished.connect(self.updater_thread.deleteLater)
+        
+        self.updater_thread.start()
+
+    @Slot(str)
+    def handle_manual_update_progress(self, message):
+        self.update_status_message(message)
+        if self.popup_dialog:
+            self.popup_dialog.info_label.setText(message)
+
+    @Slot(bool, str)
+    def handle_manual_update_finished(self, success, message):
+        self.update_status_message(message)
+        self.status_bar.update_btn.setEnabled(True)
+        
+        if self.popup_dialog:
+            self.popup_dialog.close()
+            self.popup_dialog = None
+            
+        if success:
+            QApplication.quit()
+            QProcess.startDetached(sys.executable, sys.argv)
+        else:
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle("Update Failed")
+            msg_box.setText(f"Could not complete engine replacement:\n{message}")
+            msg_box.setIcon(QMessageBox.Critical)
+            msg_box.setStyleSheet(QApplication.instance().styleSheet())
+            msg_box.exec()
+
+    @Slot()
+    def handle_browse_trigger(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select Download Directory")
+        if folder:
+            self.main_content.detail_path.setText(folder)
+
+    @Slot()
+    def handle_fetch_trigger(self):
+        url = self.main_content.url_input.text().strip()
+        if not url:
+            self.update_status_message("Error: Please paste a valid URL link first.")
+            return
+
+        folder = self.main_content.detail_path.text()
+        if not os.path.isdir(folder):
+            folder = os.path.expanduser("~/Downloads")
+            self.main_content.detail_path.setText(folder)
+
+        self.start_download_process(url, folder)
+
+    @Slot()
+    def toggle_queue_window(self):
+        if self.queue_dialog is None:
+            self.queue_dialog = QueueWindow(self)
+            self.queue_dialog.title_bar.theme_toggle.setVisible(False)
+            
+        if self.queue_dialog.isVisible():
+            self.queue_dialog.hide()
+        else:
+            self.queue_dialog.show()
 
     def start_download_process(self, url, target_folder):
         if self.worker and self.worker.isRunning():
             return
 
         self.worker = DownloadWorker(url, target_folder, self.ytdlp_path)
-        
         self.worker.status_updated.connect(self.update_status_message)
         self.worker.progress_updated.connect(self.update_download_progress)
-        self.worker.video_discovered.connect(self.populate_queue_list)
-        self.worker.video_status_changed.connect(self.update_item_state)
-        self.worker.finished_all.connect(self.on_process_finished)
         
+        self.worker.video_discovered.connect(self.main_content.handle_download_started)
+        self.worker.video_status_changed.connect(self.main_content.handle_download_finished)
+        
+        self.worker.finished.connect(self.on_process_finished)
         self.worker.start()
 
     @Slot(str)
     def update_status_message(self, message):
         if hasattr(self.status_bar, 'set_message'):
             self.status_bar.set_message(message)
+        elif hasattr(self.status_bar, 'status_label'):
+            self.status_bar.status_label.setText(message)
 
     @Slot(float, str)
     def update_download_progress(self, percentage, description):
-        if hasattr(self.main_content, 'progress_bar'):
-            self.main_content.progress_bar.setValue(int(percentage))
-        if description:
-            self.update_status_message(description)
-
-    @Slot(list)
-    def populate_queue_list(self, title_list):
-        if hasattr(self.main_content, 'table') and hasattr(self.main_content.table, 'clear_and_fill'):
-            self.main_content.table.clear_and_fill(title_list)
-
-    @Slot(int, str)
-    def update_item_state(self, index, state):
-        if hasattr(self.main_content, 'table') and hasattr(self.main_content.table, 'update_row_status'):
-            self.main_content.table.update_row_status(index, state)
+        self.main_content.update_active_progress(percentage, description)
 
     @Slot()
     def on_process_finished(self):
         self.worker = None
 
     def apply_theme_to_all(self, checked):
-        dynamic_color = "#222222" if checked else "#ffffff"
-        self.sidebar.update_theme_icons(dynamic_color)
-        self.main_content.update_theme_icons(dynamic_color)
-        self.status_bar.update_theme_icons(dynamic_color)
+        next_theme = "light_neon" if checked else "dark_neon"
+        self.current_theme = next_theme
+        
+        try:
+            style_sheet = load_stylesheet(next_theme)
+            QApplication.instance().setStyleSheet(style_sheet)
+            
+            base_path = os.path.dirname(os.path.abspath(__file__))
+            json_path = os.path.join(base_path, "themes", f"{next_theme}.json")
+            with open(json_path, 'r') as f:
+                colors = json.load(f)
+                
+            dynamic_text_color = colors.get("text_main", "#ffffff")
+            
+            self.main_content.update_theme_icons(dynamic_text_color)
+            self.status_bar.update_theme_icons(dynamic_text_color)
+            
+            if self.queue_dialog and self.queue_dialog.isVisible():
+                self.queue_dialog.update_queue_theme_icons(dynamic_text_color)
+        except Exception:
+            pass
 
 def main():
     app = QApplication(sys.argv)
     app.setAttribute(Qt.AA_EnableHighDpiScaling)
     app.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
+    initial_theme = "dark_neon"
     try:
-        app.setStyleSheet(load_stylesheet("dark_neon"))
+        app.setStyleSheet(load_stylesheet(initial_theme))
     except Exception:
         pass
 
-    window = KGMDownloaderApp()
+    window = KGMDownloaderApp(initial_theme)
     window.title_bar.theme_toggle.toggled.connect(window.apply_theme_to_all)
     window.show()
     sys.exit(app.exec())

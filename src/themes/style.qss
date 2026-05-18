@@ -9,17 +9,18 @@
     color: {{text_main}};
     border: none;
     font-size: 16px;
-    /* Uniform dimensions */
     min-width: 18px;
     max-width: 18px;
     min-height: 18px;
     max-height: 18px;
-    /* Rounded corners */
     border-radius: 6px; 
 }
 
 #CustomTitleBar {
     border-bottom: 2px solid {{border_color}};
+    color: {{text_main}};
+    font-weight: normal;
+    font-size: 13px;
 }
 
 #closeBtn:hover {
@@ -37,8 +38,53 @@
     border-right: 2px solid {{border_color}};
 }
 
+/* New Input Fields Matching App Layout Mechanics with Dynamic Theme Background */
+QLineEdit#urlInput {
+    background-color: {{secondary_bg}};
+    border: 1px solid #444;
+    border-radius: 5px;
+    color: {{text_main}};
+    padding-left: 12px;
+    font-size: 13px;
+}
+
+/* Control Buttons & Pop-up Toggles Matching Stroke Profiles */
+QPushButton#fetchUrlBtn, QPushButton#queueWindowBtn {
+    background-color: transparent;
+    border: 2px solid {{border_color}};
+    border-radius: 6px;
+    color: {{text_main}};
+    font-weight: bold;
+}
+
+QPushButton#fetchUrlBtn:hover, QPushButton#queueWindowBtn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QPushButton#browseBtn {
+    background-color: transparent;
+    border: 2px solid {{border_color}};
+    border-radius: 6px;
+    color: {{text_main}};
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 12px;
+}
+
+QPushButton#browseBtn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+#destLabel {
+    color: {{text_main}};
+    font-weight: bold;
+}
+
+#detailPathDisplay {
+    color: {{text_main}};
+}
+
 /* Custom progress bar using the accent color */
-/* Custom Table Progress Bars (Applied programmatically) */
 QProgressBar {
     border: 1px solid #444;
     border-radius: 5px;
@@ -51,7 +97,6 @@ QProgressBar::chunk {
     border-radius: 4px;
 }
 
-/* You would set these classes based on download status */
 .progress-complete::chunk { background-color: #8bc34a; }
 .progress-paused::chunk   { background-color: #ff9800; }
 .progress-failed::chunk   { background-color: #f44336; }
@@ -114,13 +159,10 @@ QHeaderView::section {
     background-color: {{primary_bg}};
     color: {{text_main}};
     padding-left: 15px;
-    border: none;
     color: {{text_main}};
-
-    border: 1px solid {{border_color}}; /* Thinner line for a cleaner look */
+    border: 1px solid {{border_color}};
     font-weight: 300;
     font-size: 12px;
-    /* Removed text-transform: uppercase to allow CamelCase */
 }
 
 /* Scrollbar remains minimalist */
@@ -135,4 +177,17 @@ QScrollBar::handle:vertical {
     background: {{border_color}};
     min-height: 20px;
     border-radius: 3px;
+}
+
+QPushButton#statusBarUpdateBtn {
+    background-color: transparent;
+    border: none;
+    color: {{text_main}};
+    font-size: 12px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+QPushButton#statusBarUpdateBtn:hover {
+    color: #03a9f4;
 }

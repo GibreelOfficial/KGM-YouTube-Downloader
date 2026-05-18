@@ -2,8 +2,7 @@ import sys
 import os
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QWidget,QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame
-from PySide6.QtSvgWidgets import QSvgWidget
+from PySide6.QtWidgets import QWidget, QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame
 from utils.paths import ASSETS_DIR
 from utils.theme_loader import load_stylesheet
 from components.buttons import ThemeToggle
@@ -20,19 +19,15 @@ class CustomTitleBar(QWidget):
         self.layout.setContentsMargins(15, 0, 15, 0)
         self.layout.setSpacing(10)
         
-        # 1. Theme Icon (Sun/Moon)
         self.theme_icon = QLabel()
         self.theme_icon.setFixedSize(18, 18)
         self.theme_icon.setObjectName("themeIcon")
         
-        # 2. Theme Toggle (Reduced size in your buttons.py)
         self.theme_toggle = ThemeToggle()
         self.theme_toggle.toggled.connect(self.switch_theme)
         
-        # Initial State (Assuming we start in Dark Mode)
         self.update_icon(False) 
 
-        # Vector Logo
         self.app_logo = QLabel()
         self.app_logo.setObjectName("appLogo")
         logo_path = os.path.join(ASSETS_DIR, "logo.png")
@@ -40,10 +35,10 @@ class CustomTitleBar(QWidget):
         self.app_logo.setPixmap(logo_pixmap.scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.app_logo.setFixedSize(20, 20)
         
-        self.title_text = QLabel("ASAP Download Manager")
+        self.title_text = QLabel("KGM YouTube Downloader")
         self.title_text.setObjectName("titleLabel")
         
-        icon_color = "#ffffff" # Default for Dark mode
+        icon_color = "#ffffff"
         
         self.btn_min = QPushButton()
         self.btn_min.setIcon(qta.icon('fa5s.minus', color=icon_color))
@@ -67,7 +62,6 @@ class CustomTitleBar(QWidget):
             item = self.layout.takeAt(0)
             if item.widget(): item.widget().hide()
 
-        # Grouping theme controls for cleaner layout
         theme_controls = [self.theme_icon, self.theme_toggle]
 
         if sys.platform == "darwin": 
@@ -91,36 +85,36 @@ class CustomTitleBar(QWidget):
 
     def update_icon(self, is_light):
         icon_color = "#222222" if is_light else "#ffffff"
-        # 'fa5s' is FontAwesome 5 Solid. You can also use 'ri' (Remix Icon) or 'ph' (Phosphor)
         icon_name = 'fa5s.sun' if is_light else 'fa5s.moon'
-        # Generate the pixmap directly from the icon font
         pixmap = qta.icon(icon_name, color=icon_color).pixmap(18, 18)
-        
         self.theme_icon.setPixmap(pixmap)
+
+    def set_title_bar_color(self, hex_color):
+        self.btn_min.setIcon(qta.icon('fa5s.minus', color=hex_color))
+        self.btn_max.setIcon(qta.icon('fa5s.square', color=hex_color))
+        self.btn_close.setIcon(qta.icon('fa5s.times', color=hex_color))
+        self.title_text.setStyleSheet(f"color: {hex_color};")
+        
+        is_light = hex_color == "#222222"
+        self.update_icon(is_light)
+        
+        for element in [self.title_text, self.btn_min, self.btn_max, self.btn_close]:
+            element.style().unpolish(element)
+            element.style().polish(element)
 
     def switch_theme(self, checked):
         theme_name = "light_neon" if checked else "dark_neon"
         try:
-            # 1. Load the stylesheet
             new_style = load_stylesheet(theme_name)
             QApplication.instance().setStyleSheet(new_style)
-            # 2. Define the new dynamic color
-            # Light mode (checked) = Dark Gray/Black, Dark mode = White
+            
             dynamic_color = "#222222" if checked else "#ffffff"
-            # 3. Update Window Control Icons
-            self.btn_min.setIcon(qta.icon('fa5s.minus', color=dynamic_color))
-            self.btn_max.setIcon(qta.icon('fa5s.square', color=dynamic_color))
-            self.btn_close.setIcon(qta.icon('fa5s.times', color=dynamic_color))
-            # 4. Update the Toggle and Sun/Moon icon
-            self.update_icon(checked)
+            self.set_title_bar_color(dynamic_color)
             self.theme_toggle.set_theme_colors(dynamic_color)
-            # 5. Update title text color
-            self.title_text.setStyleSheet(f"color: {dynamic_color};")
-            # 7 Update Main Content (Accessing via the parent ASAPApp)
+            
             if hasattr(self.parent, 'main_content'):
                 self.parent.main_content.update_theme_icons(dynamic_color)
             
-            # 8 Update Sidebar Gear (If you stored the reference in ASAPApp)
             if hasattr(self.parent, 'sidebar_settings_icon'):
                 self.parent.sidebar_settings_icon.setPixmap(
                     qta.icon('fa5s.cog', color=dynamic_color).pixmap(25, 25)
@@ -170,3 +164,13 @@ class FramelessWindow(QWidget):
         self.container_layout.addWidget(self.content_area, 1)
         
         self.main_layout.addWidget(self.container)
+
+    def update_theme_icons(self, color):
+        if hasattr(self, 'title_bar'):
+            self.title_bar.set_title_bar_color(color)
+            self.title_bar.style().unpolish(self.title_bar)
+            self.title_bar.style().polish(self.title_bar)
+        
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.update()
