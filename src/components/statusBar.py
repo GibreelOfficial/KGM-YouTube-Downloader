@@ -12,6 +12,7 @@ class StatusBar(QFrame):
         
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(15, 0, 15, 0)
+        self.layout.setSpacing(12)
         
         self.status_label = QLabel("Status: Idle!")
         
@@ -19,15 +20,38 @@ class StatusBar(QFrame):
         self.update_btn.setObjectName("statusBarUpdateBtn")
         self.update_btn.setCursor(Qt.PointingHandCursor)
         self.update_btn.setFixedHeight(25)
+
+        self.about_btn = QPushButton(" About")
+        self.about_btn.setObjectName("statusBarAboutBtn")
+        self.about_btn.setCursor(Qt.PointingHandCursor)
+        self.about_btn.setFixedHeight(25)
+        self.about_btn.clicked.connect(self.show_about_dialog)
         
         self.layout.addWidget(self.status_label)
         self.layout.addStretch()
         self.layout.addWidget(self.update_btn)
+        self.layout.addWidget(self.about_btn)
         
         self.update_theme_icons("#ffffff")
 
+    def show_about_dialog(self):
+        try:
+            from components.about import AboutDialog
+            dialog = AboutDialog(self.window())
+            dialog.exec()
+        except ImportError:
+            try:
+                from about import AboutDialog
+                dialog = AboutDialog(self.window())
+                dialog.exec()
+            except Exception:
+                pass
+        except Exception:
+            pass
+
     def update_theme_icons(self, color):
         self.update_btn.setIcon(qta.icon('fa5s.sync-alt', color=color))
+        self.about_btn.setIcon(qta.icon('fa5s.info-circle', color=color))
         
         self.style().unpolish(self)
         self.style().polish(self)
@@ -36,7 +60,8 @@ class StatusBar(QFrame):
             label.style().unpolish(label)
             label.style().polish(label)
             
-        self.update_btn.style().unpolish(self.update_btn)
-        self.update_btn.style().polish(self.update_btn)
+        for btn in self.findChildren(QPushButton):
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
             
         self.update()

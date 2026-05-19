@@ -10,6 +10,7 @@ from components.framelessWindow import FramelessWindow
 from components.main_view import MainContentView
 from components.statusBar import StatusBar
 from components.dialogues import QueueWindow
+from components.about import AboutDialog
 from utils.theme_loader import load_stylesheet
 from utils.download_worker import DownloadWorker
 from utils.updater import YTBDLPUpdater, YTDLPUpdaterWorker
@@ -84,6 +85,7 @@ class KGMDownloaderApp(FramelessWindow):
         self.worker = None
         self.current_theme = initial_theme
         self.queue_dialog = None
+        self.about_dialog = None
         
         self.updater_thread = None
         self.updater_worker = None
@@ -110,6 +112,7 @@ class KGMDownloaderApp(FramelessWindow):
         self.main_content.browse_btn.clicked.connect(self.handle_browse_trigger)
         self.main_content.queue_window_btn.clicked.connect(self.toggle_queue_window)
         self.status_bar.update_btn.clicked.connect(self.trigger_manual_update)
+        self.status_bar.about_btn.clicked.connect(self.show_about_dialog)
 
     def run_background_updater(self):
         self.background_updater = YTBDLPUpdater(self.bin_dir)
@@ -203,6 +206,11 @@ class KGMDownloaderApp(FramelessWindow):
         else:
             self.queue_dialog.show()
 
+    @Slot()
+    def show_about_dialog(self):
+        self.about_dialog = AboutDialog(self)
+        self.about_dialog.show()
+
     def start_download_process(self, url, target_folder):
         if self.worker and self.worker.isRunning():
             return
@@ -240,7 +248,11 @@ class KGMDownloaderApp(FramelessWindow):
             style_sheet = load_stylesheet(next_theme)
             QApplication.instance().setStyleSheet(style_sheet)
             
-            base_path = os.path.dirname(os.path.abspath(__file__))
+            try:
+                base_path = sys._MEIPASS
+            except AttributeError:
+                base_path = os.path.abspath(os.path.dirname(__file__))
+                
             json_path = os.path.join(base_path, "themes", f"{next_theme}.json")
             with open(json_path, 'r') as f:
                 colors = json.load(f)
@@ -257,8 +269,6 @@ class KGMDownloaderApp(FramelessWindow):
 
 def main():
     app = QApplication(sys.argv)
-    app.setAttribute(Qt.AA_EnableHighDpiScaling)
-    app.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
     initial_theme = "dark_neon"
     try:

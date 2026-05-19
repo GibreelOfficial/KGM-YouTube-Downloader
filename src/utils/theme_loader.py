@@ -1,11 +1,17 @@
 import json
 import os
+import sys
+
+def get_bundle_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.join(base_path, relative_path)
 
 def load_stylesheet(theme_name):
-    # Paths to your files
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(base_path, "..", "themes", f"{theme_name}.json")
-    qss_path = os.path.join(base_path, "..", "themes", "style.qss")
+    json_path = get_bundle_path(os.path.join("themes", f"{theme_name}.json"))
+    qss_path = get_bundle_path(os.path.join("themes", "style.qss"))
 
     with open(json_path, 'r') as f:
         colors = json.load(f)
@@ -13,7 +19,6 @@ def load_stylesheet(theme_name):
     with open(qss_path, 'r') as f:
         style = f.read()
 
-    # Replace placeholders with actual hex codes
     for key, value in colors.items():
         style = style.replace(f"{{{{{key}}}}}", value)
 

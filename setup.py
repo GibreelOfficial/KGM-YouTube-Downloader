@@ -26,13 +26,13 @@ OPTIONS = {
     'argv_emulation': False,
     'iconfile': ICON_PATH,
     'includes': ['PySide6.QtCore', 'PySide6.QtWidgets', 'PySide6.QtGui', 'qtawesome'],
-    'packages': ['utils', 'components'],
+    'packages': ['utils', 'components','themes'],
     'plist': {
         'LSBackgroundOnly': False,
         'CFBundleDevelopmentRegion': 'English',
         'CFBundleIdentifier': 'com.kgm.youtubedownloader',
-        'CFBundleVersion': '1.0.0',
-        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleVersion': '2.0.0',
+        'CFBundleShortVersionString': '2.0.0',
     }
 }
 

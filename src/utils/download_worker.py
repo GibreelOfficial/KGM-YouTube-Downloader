@@ -1,8 +1,9 @@
 import os
 import sys
 import json
-from PySide6.QtCore import QThread, Signal, QProcess, QEventLoop
+from PySide6.QtCore import QThread, Signal, QProcess, QEventLoop, QProcessEnvironment
 import re
+from datetime import datetime
 
 class DownloadWorker(QThread):
     status_updated = Signal(str)
@@ -16,11 +17,40 @@ class DownloadWorker(QThread):
         self.target_folder = target_folder
         self.ytdlp_path = os.path.abspath(ytdlp_path)
         self.process = None
+        
+        self.ensure_executable_permissions()
+
+    def ensure_executable_permissions(self):
+        bin_directory = os.path.dirname(self.ytdlp_path)
+        import stat
+        
+        for binary_name in ["yt-dlp", "ffmpeg", "ffprobe"]:
+            target_file = os.path.join(bin_directory, binary_name)
+            if os.path.exists(target_file):
+                try:
+                    current_mode = os.stat(target_file).st_mode
+                    os.chmod(target_file, current_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+                except Exception as e:
+                    print(f"[DEBUG] Failed to enforce execute permission on {binary_name}: {e}")
+
+    def get_db_path(self):
+        if hasattr(sys, '_MEIPASS'):
+            base_path = sys._MEIPASS
+        else:
+            base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        return os.path.abspath(os.path.join(base_path, "downloads_history.json"))
 
     def run(self):
         self.status_updated.emit("Extracting video information...")
         
+        bin_directory = os.path.dirname(self.ytdlp_path)
+        
+        env = QProcessEnvironment.systemEnvironment()
+        current_path = env.value("PATH")
+        env.insert("PATH", bin_directory + os.pathsep + current_path)
+        
         info_process = QProcess()
+        info_process.setProcessEnvironment(env)
         info_process.setProgram(self.ytdlp_path)
         
         info_args = ["--dump-json", "--skip-download", "--no-playlist", self.url]
@@ -43,7 +73,6 @@ class DownloadWorker(QThread):
             bytes_estimate = meta.get("filesize_approx", meta.get("filesize", 0))
             size_gb = f"{bytes_estimate / (1024**3):.2f} GB" if bytes_estimate else "N/A"
             
-            from datetime import datetime
             today_str = datetime.today().strftime('%d %b %Y')
             
             self.video_discovered.emit(title, size_gb, today_str)
@@ -53,10 +82,10 @@ class DownloadWorker(QThread):
             return
 
         self.process = QProcess()
+        self.process.setProcessEnvironment(env)
         self.process.setProgram(self.ytdlp_path)
         
         output_template = os.path.join(self.target_folder, "%(title)s.%(ext)s")
-        bin_directory = os.path.dirname(self.ytdlp_path)
         
         download_args = [
             "-o", output_template,
@@ -112,8 +141,7 @@ class DownloadWorker(QThread):
             print(f"[DEBUG YTDLP PROCESS STDERR] {line.strip()}")
 
     def save_download_to_db(self, title, size, date_str):
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "downloads_history.json")
-        db_path = os.path.abspath(db_path)
+        db_path = self.get_db_path()
         
         history_data = []
         if os.path.exists(db_path):
@@ -131,5 +159,8 @@ class DownloadWorker(QThread):
         }
         history_data.append(new_record)
         
-        with open(db_path, "w") as f:
-            json.dump(history_data, f, indent=4)
+        try:
+            with open(db_path, "w") as f:
+                json.dump(history_data, f, indent=4)
+        except Exception:
+            pass

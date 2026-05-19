@@ -1,7 +1,31 @@
-#windowContainer {
+/* ==========================================================================
+   1. Frameless Main Window & Shell Containers
+   ========================================================================== */
+#windowContainer, QWidget#FramelessWindow {
     background-color: {{primary_bg}};
     border: 2px solid {{border_color}};
     border-radius: 10px;
+}
+
+#sidebar {
+    background-color: {{secondary_bg}};
+    border-right: 2px solid {{border_color}};
+}
+
+#infoPanel {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-top: 2px solid {{border_color}};
+    border-radius: 12px;
+}
+
+/* ==========================================================================
+   2. Custom Title Bar & Window Action Controls
+   ========================================================================== */
+#CustomTitleBar {
+    border-bottom: 2px solid {{border_color}};
+    color: {{text_main}};
+    font-weight: normal;
+    font-size: 13px;
 }
 
 #minBtn, #maxBtn, #closeBtn {
@@ -16,39 +40,30 @@
     border-radius: 6px; 
 }
 
-#CustomTitleBar {
-    border-bottom: 2px solid {{border_color}};
-    color: {{text_main}};
-    font-weight: normal;
-    font-size: 13px;
-}
-
 #closeBtn:hover {
     background-color: {{danger}};
 }
+
 #minBtn:hover {
     background-color: {{ready}};
 }
+
 #maxBtn:hover {
     background-color: {{gogo}};
 }
 
-#sidebar {
-    background-color: {{secondary_bg}};
-    border-right: 2px solid {{border_color}};
-}
-
-/* New Input Fields Matching App Layout Mechanics with Dynamic Theme Background */
+/* ==========================================================================
+   3. Inputs & Standard Buttons Panel
+   ========================================================================== */
 QLineEdit#urlInput {
     background-color: {{secondary_bg}};
-    border: 1px solid #444;
+    border: 1px solid {{border_color}};
     border-radius: 5px;
     color: {{text_main}};
     padding-left: 12px;
     font-size: 13px;
 }
 
-/* Control Buttons & Pop-up Toggles Matching Stroke Profiles */
 QPushButton#fetchUrlBtn, QPushButton#queueWindowBtn {
     background-color: transparent;
     border: 2px solid {{border_color}};
@@ -75,6 +90,19 @@ QPushButton#browseBtn:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
+#addUrlBtn {
+    background-color: transparent;
+    border: 2px dashed {{border_color}};
+    border-radius: 15px;
+    color: {{text_main}};
+    font-size: 20px;
+}
+
+#addUrlBtn:hover {
+    border-color: {{accent_color}};
+    background-color: rgba(0, 255, 204, 0.05);
+}
+
 #destLabel {
     color: {{text_main}};
     font-weight: bold;
@@ -84,56 +112,9 @@ QPushButton#browseBtn:hover {
     color: {{text_main}};
 }
 
-/* Custom progress bar using the accent color */
-QProgressBar {
-    border: 1px solid #444;
-    border-radius: 5px;
-    background: #222;
-    text-align: right;
-    margin-right: 40px;
-}
-
-QProgressBar::chunk {
-    border-radius: 4px;
-}
-
-.progress-complete::chunk { background-color: #8bc34a; }
-.progress-paused::chunk   { background-color: #ff9800; }
-.progress-failed::chunk   { background-color: #f44336; }
-.progress-queued::chunk   { background-color: #03a9f4; }
-
-/* Dashed Drop Zone */
-#addUrlBtn {
-    background-color: transparent;
-    border: 2px dashed #444444;
-    border-radius: 15px;
-    color: {{text_main}};
-    font-size: 20px;
-}
-
-#addUrlBtn:hover {
-    border-color: #00ffcc;
-    background-color: rgba(0, 255, 204, 0.05);
-}
-
-/* Info Panel at the bottom */
-#infoPanel {
-    background-color: rgba(255, 255, 255, 0.02);
-    border-top: 2px solid #333333;
-    border-radius: 12px;
-}
-
-#statusBar {
-    border-top: 2px solid {{border_color}};
-    color: {{text_main}};
-}
-
-#statusBar QLabel {
-    color: {{text_main}};
-    font-size: 12px;
-}
-
-/* The Table Container */
+/* ==========================================================================
+   4. Custom Media Data Table View
+   ========================================================================== */
 #customTable {
     background-color: {{primary_bg}};
     alternate-background-color: {{primary_bg}};
@@ -144,7 +125,6 @@ QProgressBar::chunk {
     color: {{text_main}};
 }
 
-/* Row Styling */
 #customTable::item {
     padding: 3px;
 }
@@ -154,18 +134,35 @@ QProgressBar::chunk {
     border: 2px solid {{ready}};
 }
 
-/* Header Styling - CamelCase & Tight Height */
 QHeaderView::section {
     background-color: {{primary_bg}};
     color: {{text_main}};
     padding-left: 15px;
-    color: {{text_main}};
     border: 1px solid {{border_color}};
     font-weight: 300;
     font-size: 12px;
 }
 
-/* Scrollbar remains minimalist */
+/* ==========================================================================
+   5. System Progress Bars & Custom Scrollbars
+   ========================================================================== */
+QProgressBar {
+    border: 1px solid {{border_color}};
+    border-radius: 5px;
+    background: {{secondary_bg}};
+    text-align: right;
+    margin-right: 40px;
+}
+
+QProgressBar::chunk {
+    border-radius: 4px;
+}
+
+QProgressBar[statusClass="complete"]::chunk { background-color: #8bc34a; }
+QProgressBar[statusClass="paused"]::chunk   { background-color: #ff9800; }
+QProgressBar[statusClass="failed"]::chunk   { background-color: #f44336; }
+QProgressBar[statusClass="queued"]::chunk   { background-color: #03a9f4; }
+
 QScrollBar:vertical {
     border: none;
     background: transparent;
@@ -179,15 +176,103 @@ QScrollBar::handle:vertical {
     border-radius: 3px;
 }
 
-QPushButton#statusBarUpdateBtn {
+/* ==========================================================================
+   6. System Status Bar Layouts
+   ========================================================================== */
+#statusBar {
+    border-top: 2px solid {{border_color}};
+    color: {{text_main}};
+}
+
+#statusBar QLabel {
+    color: {{text_main}};
+    font-size: 12px;
+}
+
+QPushButton#statusBarUpdateBtn, QPushButton#statusBarAboutBtn {
     background-color: transparent;
     border: none;
     color: {{text_main}};
     font-size: 12px;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
-QPushButton#statusBarUpdateBtn:hover {
+QPushButton#statusBarUpdateBtn:hover, QPushButton#statusBarAboutBtn:hover {
+    color: {{accent_color}};
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   7. About Component Interface Profile
+   ========================================================================== */
+QLabel#aboutTitle {
+    color: {{text_main}};
+    font-size: 18px;
+    font-weight: bold;
+}
+
+QLabel#aboutVersion {
+    color: {{text_muted}};
+    font-size: 13px;
+}
+
+QLabel#aboutCredits {
+    color: {{text_muted}};
+    font-size: 12px;
+    line-height: 18px;
+}
+
+QWidget#supportContainer {
+    background-color: {{secondary_bg}};
+    border: 1px solid {{border_color}};
+    border-radius: 6px;
+}
+
+QLabel#supportTitle {
+    color: {{text_main}};
+    font-size: 12px;
+    font-weight: bold;
+}
+
+QLabel#momoLabel {
+    color: {{text_main}};
+    font-size: 12px;
+}
+
+QPushButton#kofiSupportBtn {
+    background-color: transparent;
+    border: 1px solid #03a9f4;
+    border-radius: 4px;
     color: #03a9f4;
+    font-weight: bold;
+    font-size: 12px;
+    padding: 4px;
+}
+
+QPushButton#kofiSupportBtn:hover {
+    background-color: rgba(3, 169, 244, 0.1);
+}
+
+QPushButton#kofiSupportBtn:pressed {
+    background-color: rgba(3, 169, 244, 0.2);
+}
+
+QPushButton#aboutCloseBtn {
+    background-color: {{secondary_bg}};
+    border: 1px solid {{border_color}};
+    border-radius: 4px;
+    color: {{text_main}};
+    font-weight: bold;
+    font-size: 12px;
+}
+
+QPushButton#aboutCloseBtn:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: {{accent_color}};
+}
+
+QPushButton#aboutCloseBtn:pressed {
+    background-color: {{primary_bg}};
 }
