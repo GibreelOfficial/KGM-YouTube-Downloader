@@ -218,8 +218,8 @@ QLabel#aboutVersion {
     font-size: 13px;
 }
 
-QLabel#aboutCredits {
-    color: {{text_muted}};
+#aboutCredits {
+    color: {{text_main}};
     font-size: 12px;
     line-height: 18px;
 }

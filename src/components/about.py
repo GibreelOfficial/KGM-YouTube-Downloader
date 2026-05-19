@@ -39,7 +39,7 @@ class AboutDialog(FramelessWindow):
         self.title.setAlignment(Qt.AlignCenter)
         
         self.version = QLabel("Version 2.0.0 beta_1")
-        self.version.setObjectName("aboutVersion")
+        self.version.setObjectName("aboutCredits")
         self.version.setAlignment(Qt.AlignCenter)
         
         self.credits_lbl = QLabel("Developed by Kisakye Gibreel\n© May 2026 KGM. All rights reserved.")
@@ -100,7 +100,7 @@ class AboutDialog(FramelessWindow):
         if parent and hasattr(parent, 'current_theme_color'):
             self.update_theme_icons(parent.current_theme_color)
         else:
-            self.update_theme_icons("#ffffff")
+            self.update_theme_icons("#9ec100")
 
     def update_theme_icons(self, color):
         self.kofi_btn.setIcon(qta.icon('fa5s.coffee', color=color))
