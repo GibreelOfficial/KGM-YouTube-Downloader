@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['src\\main.py'],
+    ['src/main.py'],
     pathex=[],
     binaries=[],
     datas=[('assets', 'assets'), ('src/bin', 'bin'), ('src/themes', 'themes')],
@@ -32,7 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['assets\\logo.ico'],
+    icon=['assets/logo.icns'],
 )
 coll = COLLECT(
     exe,
@@ -42,4 +42,10 @@ coll = COLLECT(
     upx=True,
     upx_exclude=[],
     name='KGM YouTube Downloader',
+)
+app = BUNDLE(
+    coll,
+    name='KGM YouTube Downloader.app',
+    icon='assets/logo.icns',
+    bundle_identifier=None,
 )

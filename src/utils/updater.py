@@ -2,48 +2,28 @@ import os
 import sys
 import stat
 import json
+import shutil
 import requests
 from PySide6.QtCore import QObject, QThread, Signal
 
-def get_secure_storage_bin_dir():
-    if sys.platform == "win32":
-        base_dir = os.getenv("APPDATA")
-    elif sys.platform == "darwin":
-        base_dir = os.path.expanduser("~/Library/Application Support")
-    else:
-        base_dir = os.path.expanduser("~/.local/share")
-        
-    app_storage = os.path.join(base_dir, "KGM_YouTube_Downloader", "bin")
-    os.makedirs(app_storage, exist_ok=True)
-    return app_storage
+from utils.paths import ACTIVE_BIN_DIR, FALLBACK_BIN_DIR, YTDLP_FILENAME, FFMPEG_FILENAME
 
 class YTBDLPUpdater(QThread):
     status_updated = Signal(str)
     update_finished = Signal(bool, str)
 
-    def __init__(self, fallback_bin_dir):
+    def __init__(self):
         super().__init__()
-        self.bin_dir = get_secure_storage_bin_dir()
-        self.fallback_bin_dir = os.path.abspath(fallback_bin_dir)
+        self.bin_dir = ACTIVE_BIN_DIR
         self.repo_url = "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest"
         self.version_file = os.path.join(self.bin_dir, "version_info.json")
 
-    def get_platform_filenames(self):
-        platform = sys.platform
-        cfg = {}
-        if platform == "win32":
-            cfg["remote_name"] = "yt-dlp.exe"
-            cfg["local_name"] = "yt-dlp.exe"
-            cfg["ffmpeg_name"] = "ffmpeg.exe"
-        elif platform == "darwin":
-            cfg["remote_name"] = "yt-dlp_macos"
-            cfg["local_name"] = "yt-dlp_macos"
-            cfg["ffmpeg_name"] = "ffmpeg"
-        else:
-            cfg["remote_name"] = "yt-dlp"
-            cfg["local_name"] = "yt-dlp"
-            cfg["ffmpeg_name"] = "ffmpeg"
-        return cfg
+    def get_remote_asset_name(self):
+        if sys.platform == "win32":
+            return "yt-dlp.exe"
+        elif sys.platform == "darwin":
+            return "yt-dlp_macos"
+        return "yt-dlp"
 
     def get_local_version(self):
         if os.path.exists(self.version_file):
@@ -63,14 +43,12 @@ class YTBDLPUpdater(QThread):
             pass
 
     def run(self):
-        cfg = self.get_platform_filenames()
-        ytdlp_path = os.path.join(self.bin_dir, cfg["local_name"])
-        ffmpeg_path = os.path.join(self.bin_dir, cfg["ffmpeg_name"])
+        ytdlp_path = os.path.join(self.bin_dir, YTDLP_FILENAME)
+        ffmpeg_path = os.path.join(self.bin_dir, FFMPEG_FILENAME)
 
         if not os.path.exists(ffmpeg_path):
-            fallback_ffmpeg = os.path.join(self.fallback_bin_dir, cfg["ffmpeg_name"])
+            fallback_ffmpeg = os.path.join(FALLBACK_BIN_DIR, FFMPEG_FILENAME)
             if os.path.exists(fallback_ffmpeg):
-                import shutil
                 try:
                     shutil.copy2(fallback_ffmpeg, ffmpeg_path)
                     if sys.platform != "win32":
@@ -79,7 +57,7 @@ class YTBDLPUpdater(QThread):
                     self.update_finished.emit(False, f"Failed initializing backend binaries: {str(e)}")
                     return
             else:
-                self.update_finished.emit(False, f"Required core dependency missing: {cfg['ffmpeg_name']}")
+                self.update_finished.emit(False, f"Required core dependency missing: {FFMPEG_FILENAME}")
                 return
 
         try:
@@ -96,14 +74,15 @@ class YTBDLPUpdater(QThread):
                 return
 
             self.status_updated.emit("Updating core backend package components...")
+            remote_target_name = self.get_remote_asset_name()
             download_url = None
             for asset in release_data.get("assets", []):
-                if asset.get("name") == cfg["remote_name"]:
+                if asset.get("name") == remote_target_name:
                     download_url = asset.get("browser_download_url")
                     break
 
             if not download_url:
-                self.update_finished.emit(False, f"Could not find assets matching remote framework requirements.")
+                self.update_finished.emit(False, "Could not find assets matching remote framework requirements.")
                 return
 
             temp_ytdlp = ytdlp_path + ".tmp"
@@ -133,27 +112,19 @@ class YTDLPUpdaterWorker(QObject):
     progress = Signal(str)
     finished = Signal(bool, str)
 
-    def __init__(self, current_binary_path):
+    def __init__(self, current_binary_path=None):
         super().__init__()
-        self.bin_dir = get_secure_storage_bin_dir()
-        cfg = self.get_platform_filenames()
-        self.binary_path = os.path.join(self.bin_dir, cfg["local_name"])
+        self.bin_dir = ACTIVE_BIN_DIR
+        self.binary_path = os.path.join(self.bin_dir, YTDLP_FILENAME)
         self.repo_url = "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest"
         self.version_file = os.path.join(self.bin_dir, "version_info.json")
 
-    def get_platform_filenames(self):
-        platform = sys.platform
-        cfg = {}
-        if platform == "win32":
-            cfg["remote_name"] = "yt-dlp.exe"
-            cfg["local_name"] = "yt-dlp.exe"
-        elif platform == "darwin":
-            cfg["remote_name"] = "yt-dlp_macos"
-            cfg["local_name"] = "yt-dlp"
-        else:
-            cfg["remote_name"] = "yt-dlp"
-            cfg["local_name"] = "yt-dlp"
-        return cfg
+    def get_remote_asset_name(self):
+        if sys.platform == "win32":
+            return "yt-dlp.exe"
+        elif sys.platform == "darwin":
+            return "yt-dlp_macos"
+        return "yt-dlp"
 
     def get_local_version(self):
         if os.path.exists(self.version_file):
@@ -173,7 +144,6 @@ class YTDLPUpdaterWorker(QObject):
             pass
 
     def run(self):
-        cfg = self.get_platform_filenames()
         self.progress.emit("Checking repository frameworks for component updates...")
         try:
             response = requests.get(self.repo_url, timeout=15)
@@ -187,17 +157,18 @@ class YTDLPUpdaterWorker(QObject):
                 self.finished.emit(False, "Engine optimization target is already completely up to date.")
                 return
 
+            remote_target_name = self.get_remote_asset_name()
             download_url = None
             for asset in release_data.get("assets", []):
-                if asset.get("name") == cfg["remote_name"]:
+                if asset.get("name") == remote_target_name:
                     download_url = asset.get("browser_download_url")
                     break
 
             if not download_url:
-                self.finished.emit(False, f"Could not locate asset package matching remote configuration requirements.")
+                self.finished.emit(False, "Could not locate asset package matching remote configuration requirements.")
                 return
 
-            self.progress.emit(f"Downloading latest server release: {cfg['remote_name']}...")
+            self.progress.emit(f"Downloading latest server release: {remote_target_name}...")
             temp_file_path = self.binary_path + ".tmp"
 
             with requests.get(download_url, stream=True, timeout=30) as r:

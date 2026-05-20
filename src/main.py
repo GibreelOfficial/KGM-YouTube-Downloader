@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QFileDialog, QMessageB
                              QVBoxLayout, QLabel, QProgressBar, QWidget)
 from PySide6.QtCore import Qt, Slot, QThread, QProcess, QSize
 from PySide6.QtGui import QMovie
-from utils.paths import ASSETS_DIR
+from utils.paths import ASSETS_DIR, FALLBACK_BIN_DIR, YTDLP_PATH
 from components.framelessWindow import FramelessWindow
 from components.main_view import MainContentView
 from components.statusBar import StatusBar
@@ -14,13 +14,6 @@ from components.about import AboutDialog
 from utils.theme_loader import load_stylesheet
 from utils.download_worker import DownloadWorker
 from utils.updater import YTBDLPUpdater, YTDLPUpdaterWorker
-
-def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
 
 class UpdateProgressPopup(FramelessWindow):
     def __init__(self, parent=None):
@@ -67,21 +60,6 @@ class KGMDownloaderApp(FramelessWindow):
         self.setWindowTitle("KGM YouTube Downloader")
         self.resize(1050, 680)
         
-        self.bin_dir = resource_path("bin")
-        
-        if sys.platform == "win32":
-            platform_folder = "win32"
-            ytdlp_filename = "yt-dlp.exe"
-        elif sys.platform == "darwin":
-            platform_folder = "darwin"
-            ytdlp_filename = "yt-dlp_macos"
-        else:
-            platform_folder = "linux"
-            ytdlp_filename = "yt-dlp"
-            
-        self.platform_bin_dir = os.path.join(self.bin_dir, platform_folder)
-        self.ytdlp_path = os.path.join(self.platform_bin_dir, ytdlp_filename)
-            
         self.worker = None
         self.current_theme = initial_theme
         self.queue_dialog = None
@@ -115,7 +93,7 @@ class KGMDownloaderApp(FramelessWindow):
         self.status_bar.about_btn.clicked.connect(self.show_about_dialog)
 
     def run_background_updater(self):
-        self.background_updater = YTBDLPUpdater(self.bin_dir)
+        self.background_updater = YTBDLPUpdater()
         self.background_updater.status_updated.connect(self.update_status_message)
         self.background_updater.update_finished.connect(self.handle_updater_complete)
         self.background_updater.start()
@@ -123,10 +101,9 @@ class KGMDownloaderApp(FramelessWindow):
     @Slot(bool, str)
     def handle_updater_complete(self, success, result_path):
         if success:
-            self.ytdlp_path = result_path
             self.update_status_message("Engine verified and updated to local architecture.")
         else:
-            self.update_status_message(f"Engine status verified.")
+            self.update_status_message("Engine status verified.")
 
     @Slot()
     def trigger_manual_update(self):
@@ -136,7 +113,7 @@ class KGMDownloaderApp(FramelessWindow):
         self.popup_dialog.show()
         
         self.updater_thread = QThread()
-        self.updater_worker = YTDLPUpdaterWorker(self.ytdlp_path)
+        self.updater_worker = YTDLPUpdaterWorker()
         self.updater_worker.moveToThread(self.updater_thread)
         
         self.updater_thread.started.connect(self.updater_worker.run)
@@ -215,7 +192,7 @@ class KGMDownloaderApp(FramelessWindow):
         if self.worker and self.worker.isRunning():
             return
 
-        self.worker = DownloadWorker(url, target_folder, self.ytdlp_path)
+        self.worker = DownloadWorker(url, target_folder)
         self.worker.status_updated.connect(self.update_status_message)
         self.worker.progress_updated.connect(self.update_download_progress)
         
@@ -248,12 +225,12 @@ class KGMDownloaderApp(FramelessWindow):
             style_sheet = load_stylesheet(next_theme)
             QApplication.instance().setStyleSheet(style_sheet)
             
-            try:
+            if hasattr(sys, '_MEIPASS'):
                 base_path = sys._MEIPASS
-            except AttributeError:
-                base_path = os.path.abspath(os.path.dirname(__file__))
+            else:
+                base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
                 
-            json_path = os.path.join(base_path, "themes", f"{next_theme}.json")
+            json_path = os.path.join(base_path, "src" if not hasattr(sys, '_MEIPASS') else "", "themes", f"{next_theme}.json")
             with open(json_path, 'r') as f:
                 colors = json.load(f)
                 

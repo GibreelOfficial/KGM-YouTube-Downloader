@@ -1,9 +1,12 @@
 import os
 import sys
 import json
-from PySide6.QtCore import QThread, Signal, QProcess, QEventLoop, QProcessEnvironment
 import re
+import stat
 from datetime import datetime
+from PySide6.QtCore import QThread, Signal, QProcess, QEventLoop, QProcessEnvironment
+
+from utils.paths import YTDLP_PATH, FFMPEG_PATH
 
 class DownloadWorker(QThread):
     status_updated = Signal(str)
@@ -11,27 +14,22 @@ class DownloadWorker(QThread):
     video_discovered = Signal(str, str, str)          
     video_status_changed = Signal(str)  
 
-    def __init__(self, url, target_folder, ytdlp_path):
+    def __init__(self, url, target_folder):
         super().__init__()
         self.url = url
         self.target_folder = target_folder
-        self.ytdlp_path = os.path.abspath(ytdlp_path)
         self.process = None
         
         self.ensure_executable_permissions()
 
     def ensure_executable_permissions(self):
-        bin_directory = os.path.dirname(self.ytdlp_path)
-        import stat
-        
-        for binary_name in ["yt-dlp", "ffmpeg", "ffprobe"]:
-            target_file = os.path.join(bin_directory, binary_name)
-            if os.path.exists(target_file):
+        for binary_path in [YTDLP_PATH, FFMPEG_PATH]:
+            if os.path.exists(binary_path) and sys.platform != "win32":
                 try:
-                    current_mode = os.stat(target_file).st_mode
-                    os.chmod(target_file, current_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+                    current_mode = os.stat(binary_path).st_mode
+                    os.chmod(binary_path, current_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
                 except Exception as e:
-                    print(f"[DEBUG] Failed to enforce execute permission on {binary_name}: {e}")
+                    print(f"[DEBUG] Failed to enforce execute permission on {binary_path}: {e}")
 
     def get_db_path(self):
         if hasattr(sys, '_MEIPASS'):
@@ -43,7 +41,7 @@ class DownloadWorker(QThread):
     def run(self):
         self.status_updated.emit("Extracting video information...")
         
-        bin_directory = os.path.dirname(self.ytdlp_path)
+        bin_directory = os.path.dirname(YTDLP_PATH)
         
         env = QProcessEnvironment.systemEnvironment()
         current_path = env.value("PATH")
@@ -51,7 +49,7 @@ class DownloadWorker(QThread):
         
         info_process = QProcess()
         info_process.setProcessEnvironment(env)
-        info_process.setProgram(self.ytdlp_path)
+        info_process.setProgram(YTDLP_PATH)
         
         info_args = ["--dump-json", "--skip-download", "--no-playlist", self.url]
         info_process.setArguments(info_args)
@@ -83,15 +81,16 @@ class DownloadWorker(QThread):
 
         self.process = QProcess()
         self.process.setProcessEnvironment(env)
-        self.process.setProgram(self.ytdlp_path)
+        self.process.setProgram(YTDLP_PATH)
         
         output_template = os.path.join(self.target_folder, "%(title)s.%(ext)s")
+        ffmpeg_dir = os.path.dirname(FFMPEG_PATH)
         
         download_args = [
             "-o", output_template,
             "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]", 
             "--merge-output-format", "mp4",
-            "--ffmpeg-location", bin_directory,
+            "--ffmpeg-location", ffmpeg_dir,
             "--newline",
             self.url
         ]
