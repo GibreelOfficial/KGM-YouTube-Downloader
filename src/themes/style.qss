@@ -108,6 +108,10 @@ QPushButton#browseBtn:hover {
     font-weight: bold;
 }
 
+#detailName{
+    color:{{text_main}}
+}
+
 #detailPathDisplay {
     color: {{text_main}};
 }
